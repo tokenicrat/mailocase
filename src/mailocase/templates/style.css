@@ -79,6 +79,7 @@ table.threads tr:hover td { background: #f5f5f5; }
 
 .col-replies { text-align: right; color: #666; }
 .col-date    { white-space: nowrap; color: #666; }
+.col-date a  { color: var(--color); text-decoration: none; }
 .col-from    { white-space: nowrap; }
 
 /* ── Email page ── */

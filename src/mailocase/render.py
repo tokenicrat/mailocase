@@ -206,7 +206,7 @@ def _truncate_string(string: str, length: int) -> str:
 
 def _render_index(roots: list[ThreadNode], site: dict[str, Any]) -> str:
     intro = site.get("homepage_text", "")
-    intro_html = f"{intro}\n" if intro else ""
+    intro_html = f'<p class="intro">{intro}</p>\n' if intro else ""
 
     sort_order = site.get("sort_order", "oldest_first")
     current_order = "newest" if sort_order == "newest_first" else "oldest"
