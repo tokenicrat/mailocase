@@ -1,5 +1,4 @@
 from __future__ import annotations
-from logging.handlers import SocketHandler
 
 import html
 import re
@@ -81,6 +80,7 @@ def _load_messages(mail_dir: Path) -> dict[str, MailMessage]:
 
 def _build_threads(
     messages: dict[str, MailMessage],
+    sort_newest_first: bool = False,
 ) -> tuple[list[ThreadNode], dict[str, str]]:
     # message-id → filename hash
     id_map: dict[str, str] = {msg.message_id: h for h, msg in messages.items()}
@@ -104,7 +104,7 @@ def _build_threads(
     root_nodes = sorted(
         (build_node(r) for r in roots),
         key=lambda n: _date_key(n.message),
-        reverse=True,
+        reverse=sort_newest_first,
     )
     return root_nodes, id_map
 
@@ -191,7 +191,7 @@ def _page(
         site_title=html.escape(site.get("title", "")),
         nav=nav,
         body=body,
-        footer=html.escape(site.get("footer", "")),
+        footer=site.get("footer", ""),
     )
 
 
@@ -206,7 +206,10 @@ def _truncate_string(string: str, length: int) -> str:
 
 def _render_index(roots: list[ThreadNode], site: dict[str, Any]) -> str:
     intro = site.get("homepage_text", "")
-    intro_html = f'<p class="intro">{html.escape(intro)}</p>\n' if intro else ""
+    intro_html = f"{intro}\n" if intro else ""
+
+    sort_order = site.get("sort_order", "oldest_first")
+    current_order = "newest" if sort_order == "newest_first" else "oldest"
 
     rows = []
     for node in roots:
@@ -214,10 +217,11 @@ def _render_index(roots: list[ThreadNode], site: dict[str, Any]) -> str:
         subj = html.escape(msg.subject or "(no subject)")
         frm = html.escape(msg.from_addr)
         date = html.escape(msg.date)
+        ts = int(_date_key(msg).timestamp()) if _date_key(msg) != datetime.min else 0
         replies = _count_descendants(node)
         reply_str = f"+{replies}" if replies else ""
         rows.append(
-            f"<tr>"
+            f"<tr data-ts=\"{ts}\">"
             f'<td><a href="m/{node.hash}.html">{subj}</a></td>'
             f'<td class="col-from">{_truncate_string(frm, 15)}</td>'
             f'<td class="col-replies">{reply_str}</td>'
@@ -229,13 +233,37 @@ def _render_index(roots: list[ThreadNode], site: dict[str, Any]) -> str:
     table = (
         '<table class="threads">\n'
         "<thead><tr>"
-        "<th>Subject</th><th>From</th><th>Replies</th><th>Date</th>"
+        "<th>Subject</th><th>From</th><th>Replies</th>"
+        '<th class="col-date">'
+        f'Date <a href="javascript:void(0)" class="sort-toggle" data-order="{current_order}"'
+        f' onclick="toggleSort(this)">'
+        f'{"&#x25B2;" if current_order == "oldest" else "&#x25BC;"}'
+        f"</a></th>"
         "</tr></thead>\n"
         f"<tbody>{tbody}</tbody>\n"
         "</table>"
     )
 
-    body = f"{intro_html}{table}"
+    script = (
+        '<script>\n'
+        'function toggleSort(el) {\n'
+        '  var tbody = document.querySelector("table.threads tbody");\n'
+        '  var rows = Array.from(tbody.querySelectorAll("tr"));\n'
+        '  var order = el.getAttribute("data-order");\n'
+        '  var ascending = order !== "oldest";\n'
+        '  el.setAttribute("data-order", ascending ? "oldest" : "newest");\n'
+        '  el.innerHTML = ascending ? "&#x25B2;" : "&#x25BC;";\n'
+        '  rows.sort(function(a, b) {\n'
+        '    var ta = parseInt(a.getAttribute("data-ts")) || 0;\n'
+        '    var tb = parseInt(b.getAttribute("data-ts")) || 0;\n'
+        '    return ascending ? ta - tb : tb - ta;\n'
+        '  });\n'
+        '  rows.forEach(function(r) { tbody.appendChild(r); });\n'
+        '}\n'
+        '</script>'
+    )
+
+    body = f"{intro_html}{table}{script}"
     return _page(site.get("title", "Archive"), body, site)
 
 
@@ -295,7 +323,8 @@ def render_site(mail_dir: Path, output_dir: Path, config: dict[str, Any]) -> Non
         shutil.copytree(static_dir, output_dir, dirs_exist_ok=True)
 
     messages = _load_messages(mail_dir)
-    roots, id_map = _build_threads(messages)
+    sort_newest = site.get("sort_order", "oldest_first") == "newest_first"
+    roots, id_map = _build_threads(messages, sort_newest_first=sort_newest)
 
     (output_dir / "style.css").write_text((_TEMPLATES_DIR / "style.css").read_text())
     (output_dir / "index.html").write_text(_render_index(roots, site))

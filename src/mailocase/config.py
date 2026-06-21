@@ -16,6 +16,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "footer": "Powered by Mailocase",
         "homepage_text": "",
         "favicon": "",
+        "sort_order": "oldest_first",
     },
 }
 
