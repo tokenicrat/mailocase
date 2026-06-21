@@ -10,7 +10,7 @@ from typing import Optional
 from mailocase.config import (
     find_config, load_config, lookup_user, format_address, _extract_email,
 )
-from mailocase.mail import MailMessage
+from mailocase.mail import MailMessage, read_mail_file
 
 
 def _draft_filename() -> str:
@@ -41,7 +41,7 @@ def _apply_reply(
         return
     reply_path = mail_dir / reply_to
     if reply_path.exists():
-        parent = MailMessage.from_string(reply_path.read_text())
+        parent = MailMessage.from_string(read_mail_file(reply_path))
         msg.in_reply_to = parent.message_id
         msg.references = list(parent.references) + [parent.message_id]
         if update_subject:
@@ -135,7 +135,7 @@ def cmd_draft(
     if reply_to:
         reply_path = mail_dir / reply_to
         if reply_path.exists():
-            parent = MailMessage.from_string(reply_path.read_text())
+            parent = MailMessage.from_string(read_mail_file(reply_path))
             in_reply_to = parent.message_id
             references = list(parent.references) + [parent.message_id]
             subj = parent.subject.strip()

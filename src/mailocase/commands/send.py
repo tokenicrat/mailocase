@@ -6,7 +6,7 @@ from typing import Optional
 from mailocase.config import (
     find_config, load_config, lookup_user, format_address, _extract_email,
 )
-from mailocase.mail import MailMessage
+from mailocase.mail import MailMessage, encode_mail_content, read_mail_file
 
 
 def cmd_send(
@@ -44,7 +44,7 @@ def cmd_send(
     if reply_to:
         reply_path = mail_dir / reply_to
         if reply_path.exists():
-            parent = MailMessage.from_string(reply_path.read_text())
+            parent = MailMessage.from_string(read_mail_file(reply_path))
             msg.in_reply_to = parent.message_id
             msg.references = list(parent.references) + [parent.message_id]
         else:
@@ -70,6 +70,9 @@ def cmd_send(
         print(f"Already exists (identical content): {mail_hash}")
         draft_path.unlink()
         return
+
+    if cfg.get("encode_emails", False):
+        content = encode_mail_content(content)
 
     mail_path.write_text(content)
     draft_path.unlink()

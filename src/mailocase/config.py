@@ -10,6 +10,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "addresses": [],
     "default_from": "",
     "list_address": "list@example.com",
+    "encode_emails": False,
     "site": {
         "title": "Mailocase Archive",
         "footer": "Powered by Mailocase",

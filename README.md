@@ -149,6 +149,7 @@ mailocase list --include-draft          # Include drafts in results
   ],
   "default_from": "you@example.com",
   "list_address": "list@example.com",
+  "encode_email": false,
   "site": {
     "title": "Mailocase Archive",
     "footer": "Powered by Mailocase",
@@ -167,6 +168,7 @@ mailocase list --include-draft          # Include drafts in results
 | `addresses` | List of sender addresses (objects with `name` and `email` fields) available when drafting or using `-a` |
 | `default_from` | Default `From` address for new drafts (email or `name@example.com`) |
 | `list_address` | Address used as the mailing list `To` |
+| `encode_email` | Encode sent emails with Base64 |
 | `site.title` | Title shown in the rendered site |
 | `site.footer` | Footer text on every page |
 | `site.homepage_text` | Optional intro text on the index page |

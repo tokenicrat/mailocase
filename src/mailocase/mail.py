@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import re
 from dataclasses import dataclass, field
+from pathlib import Path
 
 
 @dataclass
@@ -92,3 +94,22 @@ class MailMessage:
 
     def is_reply(self) -> bool:
         return bool(self.in_reply_to)
+
+
+def encode_mail_content(plain: str) -> str:
+    return base64.b64encode(plain.encode()).decode()
+
+
+def decode_mail_content(data: str) -> str:
+    try:
+        decoded_bytes = base64.b64decode(data, validate=True)
+        result = decoded_bytes.decode()
+        if result.startswith("From:"):
+            return result
+    except Exception:
+        pass
+    return data
+
+
+def read_mail_file(path: Path) -> str:
+    return decode_mail_content(path.read_text())

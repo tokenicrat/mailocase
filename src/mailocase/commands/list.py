@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 
 from mailocase.config import find_config, _extract_email
-from mailocase.mail import MailMessage
+from mailocase.mail import MailMessage, read_mail_file
 
 
 def _matches(
@@ -55,7 +55,7 @@ def cmd_list(
         for p in sorted(mail_dir.iterdir()):
             if p.is_file():
                 try:
-                    msg = MailMessage.from_string(p.read_text())
+                    msg = MailMessage.from_string(read_mail_file(p))
                 except Exception:
                     continue
                 if _matches(msg, root, from_addr, cc_filter, subject, content):

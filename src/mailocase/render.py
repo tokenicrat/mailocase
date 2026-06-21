@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from mailocase.config import find_config, load_config
-from mailocase.mail import MailMessage
+from mailocase.mail import MailMessage, read_mail_file
 
 _TEMPLATES_DIR = Path(__file__).parent / "templates"
 
@@ -73,7 +73,7 @@ def _load_messages(mail_dir: Path) -> dict[str, MailMessage]:
     for f in mail_dir.iterdir():
         if f.is_file() and not f.name.startswith("."):
             try:
-                messages[f.name] = MailMessage.from_string(f.read_text())
+                messages[f.name] = MailMessage.from_string(read_mail_file(f))
             except Exception:
                 pass
     return messages
